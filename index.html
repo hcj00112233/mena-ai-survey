@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MENA AI Content Survey</title>
+  <style>
+    :root {
+      --ink: #111312;
+      --muted: #69706c;
+      --bg: #eef3ef;
+      --paper: #fffdf8;
+      --line: #d8ddd7;
+      --green: #0f6f5e;
+      --green-dark: #073d35;
+      --gold: #c8a75d;
+      --clay: #9a4f3d;
+      --rose: #6f2538;
+      --sand: #f2eadb;
+      --soft: #e8f4ef;
+      --shadow: 0 24px 70px rgba(11, 41, 35, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 14%, rgba(200, 167, 93, 0.18), transparent 26%),
+        linear-gradient(135deg, rgba(15, 111, 94, 0.11), transparent 36%),
+        var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body[dir="rtl"] {
+      font-family: Tahoma, Arial, "Noto Sans Arabic", sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.18;
+      background-image:
+        linear-gradient(30deg, rgba(15, 111, 94, 0.22) 12%, transparent 12.5%, transparent 87%, rgba(15, 111, 94, 0.22) 87.5%),
+        linear-gradient(150deg, rgba(15, 111, 94, 0.22) 12%, transparent 12.5%, transparent 87%, rgba(15, 111, 94, 0.22) 87.5%);
+      background-size: 54px 94px;
+    }
+
+    button, input, select, textarea { font: inherit; letter-spacing: 0; }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 30px 0 46px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 8px 8px 18px 18px;
+      background: linear-gradient(150deg, var(--green-dark), var(--green));
+      color: #fff8e7;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      box-shadow: 0 12px 26px rgba(7, 61, 53, 0.24);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(20px, 2.3vw, 31px);
+      line-height: 1.05;
+      font-weight: 850;
+    }
+
+    .brand p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: 40px;
+      border: 1px solid rgba(15, 111, 94, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 253, 248, 0.8);
+      padding: 3px;
+      box-shadow: 0 8px 26px rgba(11, 41, 35, 0.08);
+    }
+
+    .segmented button {
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      min-width: 58px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .segmented button.active {
+      background: var(--green);
+      color: white;
+    }
+
+    .survey-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 310px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(255, 253, 248, 0.96);
+      border: 1px solid rgba(216, 221, 215, 0.9);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .question-panel {
+      min-height: 680px;
+      padding: clamp(26px, 4.8vw, 58px);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .question-panel::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      inset-inline-end: 0;
+      width: 190px;
+      height: 190px;
+      background:
+        linear-gradient(135deg, transparent 42%, rgba(200, 167, 93, 0.2) 42%, rgba(200, 167, 93, 0.2) 58%, transparent 58%),
+        linear-gradient(45deg, transparent 42%, rgba(15, 111, 94, 0.13) 42%, rgba(15, 111, 94, 0.13) 58%, transparent 58%);
+      background-size: 34px 34px;
+      opacity: 0.72;
+      pointer-events: none;
+    }
+
+    .side-panel {
+      padding: 22px;
+      position: sticky;
+      top: 20px;
+      background:
+        linear-gradient(180deg, rgba(15, 111, 94, 0.08), transparent),
+        rgba(255, 253, 248, 0.94);
+    }
+
+    .side-panel h3 {
+      margin: 0 0 14px;
+      font-size: 20px;
+    }
+
+    .side-panel p {
+      color: var(--muted);
+      line-height: 1.8;
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .side-panel a {
+      color: var(--green);
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 34px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-label {
+      color: var(--green);
+      font-weight: 900;
+      font-size: clamp(17px, 2vw, 25px);
+    }
+
+    .progress {
+      width: min(42%, 460px);
+      height: 13px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #dfe4e3;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--green), var(--gold));
+      transition: width 180ms ease;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: clamp(40px, 6.4vw, 82px);
+      line-height: 1.03;
+      max-width: 980px;
+      font-weight: 900;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 26px);
+      line-height: 1.45;
+      margin: 0 0 38px;
+      max-width: 860px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field, .textarea-field { display: grid; gap: 8px; }
+
+    label {
+      color: var(--ink);
+      font-weight: 850;
+      font-size: 15px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 54px;
+      border: 1px solid #d2d9d6;
+      border-radius: 10px;
+      background: #fffefa;
+      color: var(--ink);
+      outline: none;
+      padding: 12px 14px;
+    }
+
+    select {
+      max-height: 54px;
+    }
+
+    textarea {
+      min-height: 112px;
+      resize: vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 4px rgba(15, 111, 94, 0.14);
+    }
+
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .option {
+      min-height: 76px;
+      border: 1.5px solid #d2d9d6;
+      border-radius: 13px;
+      background: rgba(255, 255, 252, 0.8);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      cursor: pointer;
+      transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+      font-size: 20px;
+      font-weight: 850;
+    }
+
+    .option:hover {
+      transform: translateY(-2px);
+      border-color: rgba(15, 111, 94, 0.55);
+    }
+
+    .option input {
+      width: 24px;
+      height: 24px;
+      min-height: 24px;
+      accent-color: var(--green);
+      flex: 0 0 auto;
+    }
+
+    .option.selected {
+      background: var(--soft);
+      border-color: var(--green);
+      box-shadow: inset 0 0 0 1px rgba(15, 111, 94, 0.08);
+    }
+
+    .other-wrap {
+      display: none;
+      margin-top: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .other-wrap.visible { display: block; }
+
+    .cover-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover-option {
+      display: block;
+      cursor: pointer;
+      min-width: 0;
+      position: relative;
+    }
+
+    .cover-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .cover-card {
+      display: block;
+      border: 2px solid transparent;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #111;
+      position: relative;
+      box-shadow: 0 14px 35px rgba(11, 41, 35, 0.12);
+    }
+
+    .cover-card img {
+      display: block;
+      width: 100%;
+      height: auto;
+      object-fit: initial;
+      background: #111;
+    }
+
+    .cover-option input:checked + .cover-card {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 4px rgba(200, 167, 93, 0.25), 0 18px 45px rgba(11, 41, 35, 0.18);
+    }
+
+    .creator-list {
+      display: grid;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .creator-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+      background: rgba(255, 255, 252, 0.72);
+    }
+
+    .creator-item h3 {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+
+    .error {
+      color: #a9362b;
+      font-weight: 850;
+      min-height: 22px;
+      margin: 16px 0 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-nav {
+      margin-top: auto;
+      padding-top: 34px;
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .button {
+      border: 0;
+      min-height: 54px;
+      border-radius: 12px;
+      padding: 0 26px;
+      font-weight: 900;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .button.primary {
+      color: white;
+      background: var(--green);
+      box-shadow: 0 12px 25px rgba(15, 111, 94, 0.24);
+    }
+
+    .button.primary:hover { background: var(--green-dark); }
+
+    .button.secondary {
+      color: var(--ink);
+      background: #fffefa;
+      border: 1px solid #d2d9d6;
+    }
+
+    .button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .completion {
+      margin: auto;
+      text-align: center;
+      max-width: 720px;
+    }
+
+    .completion h2 {
+      margin-inline: auto;
+    }
+
+    @media (max-width: 940px) {
+      .survey-layout, .field-grid, .option-grid, .cover-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel { position: static; }
+      .progress { width: 100%; }
+      .meta-row { flex-direction: column; align-items: stretch; }
+      h2 { font-size: clamp(34px, 10vw, 64px); }
+    }
+
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 20px, 1180px); padding-top: 16px; }
+      .topbar { flex-direction: column; align-items: stretch; }
+      .segmented { align-self: flex-start; }
+      .question-panel { min-height: calc(100vh - 210px); padding: 22px; }
+      .option { font-size: 17px; min-height: 66px; }
+      .footer-nav { flex-direction: column-reverse; }
+      .button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">AI</div>
+        <div>
+          <h1 data-i18n="appTitle">MENA AI Content Survey</h1>
+          <p data-i18n="appSubtitle">Tell us what AI content you actually watch.</p>
+        </div>
+      </div>
+      <div class="segmented" aria-label="Language">
+        <button id="langEn" class="active" type="button">EN</button>
+        <button id="langAr" type="button">AR</button>
+      </div>
+    </header>
+
+    <div class="survey-layout">
+      <section class="panel question-panel" id="questionCard"></section>
+      <aside class="panel side-panel">
+        <h3 data-i18n="promiseTitle">Privacy commitment</h3>
+        <p data-i18n="promiseBody">We promise that all survey information will remain strictly confidential and all participants will be anonymized. If you discover any information leakage, please contact huchunjian@moonshot.ai and we will help resolve it promptly.</p>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "mena-ai-content-survey-responses";
+    const LEGACY_STORAGE_KEY = "gcc-ai-content-survey-responses";
+
+    const countryNames = [
+      "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Cote d'Ivoire","Croatia","Cuba","Cyprus","Czechia","Democratic Republic of the Congo","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe","Other"
+    ];
+
+    const arCountryNames = [
+      "أفغانستان","ألبانيا","الجزائر","أندورا","أنغولا","أنتيغوا وبربودا","الأرجنتين","أرمينيا","أستراليا","النمسا","أذربيجان","باهاماس","البحرين","بنغلاديش","باربادوس","بيلاروس","بلجيكا","بليز","بنين","بوتان","بوليفيا","البوسنة والهرسك","بوتسوانا","البرازيل","بروناي","بلغاريا","بوركينا فاسو","بوروندي","الرأس الأخضر","كمبوديا","الكاميرون","كندا","جمهورية أفريقيا الوسطى","تشاد","تشيلي","الصين","كولومبيا","جزر القمر","الكونغو","كوستاريكا","ساحل العاج","كرواتيا","كوبا","قبرص","التشيك","جمهورية الكونغو الديمقراطية","الدنمارك","جيبوتي","دومينيكا","جمهورية الدومينيكان","الإكوادور","مصر","السلفادور","غينيا الاستوائية","إريتريا","إستونيا","إسواتيني","إثيوبيا","فيجي","فنلندا","فرنسا","الغابون","غامبيا","جورجيا","ألمانيا","غانا","اليونان","غرينادا","غواتيمالا","غينيا","غينيا بيساو","غيانا","هايتي","هندوراس","المجر","آيسلندا","الهند","إندونيسيا","إيران","العراق","أيرلندا","إسرائيل","إيطاليا","جامايكا","اليابان","الأردن","كازاخستان","كينيا","كيريباتي","الكويت","قيرغيزستان","لاوس","لاتفيا","لبنان","ليسوتو","ليبيريا","ليبيا","ليختنشتاين","ليتوانيا","لوكسمبورغ","مدغشقر","مالاوي","ماليزيا","المالديف","مالي","مالطا","جزر مارشال","موريتانيا","موريشيوس","المكسيك","ميكرونيزيا","مولدوفا","موناكو","منغوليا","الجبل الأسود","المغرب","موزمبيق","ميانمار","ناميبيا","ناورو","نيبال","هولندا","نيوزيلندا","نيكاراغوا","النيجر","نيجيريا","كوريا الشمالية","مقدونيا الشمالية","النرويج","عمان","باكستان","بالاو","فلسطين","بنما","بابوا غينيا الجديدة","باراغواي","بيرو","الفلبين","بولندا","البرتغال","قطر","رومانيا","روسيا","رواندا","سانت كيتس ونيفيس","سانت لوسيا","سانت فنسنت والغرينادين","ساموا","سان مارينو","ساو تومي وبرينسيب","السعودية","السنغال","صربيا","سيشل","سيراليون","سنغافورة","سلوفاكيا","سلوفينيا","جزر سليمان","الصومال","جنوب أفريقيا","كوريا الجنوبية","جنوب السودان","إسبانيا","سريلانكا","السودان","سورينام","السويد","سويسرا","سوريا","طاجيكستان","تنزانيا","تايلاند","تيمور الشرقية","توغو","تونغا","ترينيداد وتوباغو","تونس","تركيا","تركمانستان","توفالو","أوغندا","أوكرانيا","الإمارات العربية المتحدة","المملكة المتحدة","الولايات المتحدة","أوروغواي","أوزبكستان","فانواتو","الفاتيكان","فنزويلا","فيتنام","اليمن","زامبيا","زيمبابوي","أخرى"
+    ];
+
+    const copy = {
+      en: {
+        appTitle: "MENA AI Content Survey",
+        appSubtitle: "Tell us what AI content you actually watch.",
+        promiseTitle: "Privacy commitment",
+        promiseBody: "We promise that all survey information will remain strictly confidential and all participants will be anonymized. If you discover any information leakage, please contact huchunjian@moonshot.ai and we will help resolve it promptly.",
+        next: "Next",
+        back: "Back",
+        submit: "Submit",
+        required: "Please complete the required fields before continuing.",
+        maxThree: "Please select no more than three options.",
+        maxTwo: "Please select no more than two platforms.",
+        profileStep: "Profile",
+        questionStep: "Question",
+        completeTitle: "Thank you.",
+        completeBody: "Your response has been submitted. We appreciate your time.",
+        startAnother: "Submit another response",
+        name: "Name",
+        email: "Email",
+        countryField: "Country / Region",
+        worksInAi: "Do you work in the AI industry?",
+        isDeveloper: "Are you a developer?",
+        yes: "Yes",
+        no: "No",
+        optional: "Optional",
+        otherPlaceholder: "Please specify",
+        giftNote: "If your recommendation is selected, you may receive our mystery gift.",
+        qAiTimeTitle: "How much time do you use AI tools every day?",
+        qAiTimeHint: "Choose the option closest to your daily usage.",
+        qContentTitle: "What types of content do you usually watch?",
+        qContentHint: "Multiple choice. Select up to three.",
+        qLanguageTitle: "What video language do you prefer?",
+        qLanguageHint: "Single choice. If you choose another language, please write the language name.",
+        qPlatformTitle: "Where do you prefer to watch AI-related content?",
+        qPlatformHint: "Multiple choice. Select up to two.",
+        qCoverTitle: "Which thumbnail would most attract you to click and watch?",
+        qCoverHint: "Single choice. Choose the one you would be most likely to open.",
+        qCreatorTitle: "Recommend up to three creators",
+        qCreatorHint: "Share creators, channels, or accounts you think we should study.",
+        creatorSlot: "Creator",
+        creatorName: "Creator name",
+        channelLink: "Channel link",
+        reason: "Reason",
+        aiTimeOptions: ["Less than 1 hour", "2-4 hours", "More than 4 hours", "Other"],
+        contentTypes: ["Tech tutorials", "Sports & fitness", "Digital gadgets", "Furniture & real estate", "Tech news", "Medical & health", "Cars", "Personal growth", "Lifestyle & entertainment", "Relationships", "Other"],
+        languageOptions: ["English", "Modern Standard Arabic", "Gulf Arabic", "Egyptian Arabic", "Levantine Arabic", "Maghrebi Arabic", "Other language"],
+        platforms: ["TikTok", "YouTube", "Instagram", "X", "Facebook", "Snapchat", "Others"],
+        covers: ["Arabic news style", "Question-led talking head", "New model announcement", "Tool tutorial", "Product launch presentation", "Hot-take comparison"]
+      },
+      ar: {
+        appTitle: "استبيان محتوى الذكاء الاصطناعي في الشرق الأوسط وشمال أفريقيا",
+        appSubtitle: "أخبرنا ما محتوى الذكاء الاصطناعي الذي تشاهده فعلا.",
+        promiseTitle: "تعهد الخصوصية",
+        promiseBody: "نتعهد بالحفاظ على سرية جميع معلومات هذا الاستبيان ومعالجة بيانات جميع المشاركين بشكل مجهول. إذا اكتشفت أي تسريب للمعلومات، يرجى التواصل مع huchunjian@moonshot.ai وسنساعدك في حل المشكلة بسرعة.",
+        next: "التالي",
+        back: "رجوع",
+        submit: "إرسال",
+        required: "يرجى إكمال الحقول المطلوبة قبل المتابعة.",
+        maxThree: "يرجى اختيار ثلاثة خيارات كحد أقصى.",
+        maxTwo: "يرجى اختيار منصتين كحد أقصى.",
+        profileStep: "البيانات",
+        questionStep: "السؤال",
+        completeTitle: "شكرا لك.",
+        completeBody: "تم إرسال إجابتك. نقدر وقتك ومشاركتك.",
+        startAnother: "إرسال إجابة أخرى",
+        name: "الاسم",
+        email: "البريد الإلكتروني",
+        countryField: "الدولة / المنطقة",
+        worksInAi: "هل تعمل في مجال الذكاء الاصطناعي؟",
+        isDeveloper: "هل أنت مطور برمجيات؟",
+        yes: "نعم",
+        no: "لا",
+        optional: "اختياري",
+        otherPlaceholder: "يرجى التوضيح",
+        giftNote: "إذا تم اعتماد ترشيحك، قد تحصل على هديتنا الغامضة.",
+        qAiTimeTitle: "كم من الوقت تستخدم أدوات الذكاء الاصطناعي يوميا؟",
+        qAiTimeHint: "اختر الخيار الأقرب لاستخدامك اليومي.",
+        qContentTitle: "ما أنواع المحتوى التي تشاهدها عادة؟",
+        qContentHint: "اختيار متعدد. اختر ثلاثة خيارات كحد أقصى.",
+        qLanguageTitle: "ما اللغة التي تفضلها في الفيديوهات؟",
+        qLanguageHint: "اختيار واحد. إذا اخترت لغة أخرى، يرجى كتابة اسم اللغة.",
+        qPlatformTitle: "ما المنصات التي تفضل مشاهدة محتوى الذكاء الاصطناعي عليها؟",
+        qPlatformHint: "اختيار متعدد. اختر منصتين كحد أقصى.",
+        qCoverTitle: "أي غلاف يجذبك أكثر للنقر ومشاهدة المحتوى؟",
+        qCoverHint: "اختيار واحد. اختر الغلاف الذي من المرجح أن تفتحه.",
+        qCreatorTitle: "رشح حتى ثلاثة صناع محتوى",
+        qCreatorHint: "شارك صناع محتوى أو قنوات أو حسابات ترى أننا يجب أن ندرسها.",
+        creatorSlot: "صانع المحتوى",
+        creatorName: "اسم صانع المحتوى",
+        channelLink: "رابط القناة",
+        reason: "سبب الترشيح",
+        aiTimeOptions: ["أقل من ساعة", "من ساعتين إلى 4 ساعات", "أكثر من 4 ساعات", "أخرى"],
+        contentTypes: ["شروحات تقنية", "رياضة ولياقة", "أجهزة رقمية", "أثاث وعقارات", "أخبار تقنية", "طب وصحة", "سيارات", "تطوير الذات", "ترفيه ونمط حياة", "علاقات", "أخرى"],
+        languageOptions: ["الإنجليزية", "العربية الفصحى", "اللهجة الخليجية", "اللهجة المصرية", "اللهجة الشامية", "اللهجة المغاربية", "لغة أخرى"],
+        platforms: ["TikTok", "YouTube", "Instagram", "X", "Facebook", "Snapchat", "أخرى"],
+        covers: ["أسلوب الأخبار العربية", "وجه مع سؤال واضح", "إعلان نموذج جديد", "شرح أداة", "عرض إطلاق منتج", "مقارنة مثيرة للجدل"]
+      }
+    };
+
+    const values = {
+      aiTimeOptions: ["Less than 1 hour", "2-4 hours", "More than 4 hours", "Other"],
+      contentTypes: ["Tech tutorials", "Sports & fitness", "Digital gadgets", "Furniture & real estate", "Tech news", "Medical & health", "Cars", "Personal growth", "Lifestyle & entertainment", "Relationships", "Other"],
+      languageOptions: ["English", "Modern Standard Arabic", "Gulf Arabic", "Egyptian Arabic", "Levantine Arabic", "Maghrebi Arabic", "Other language"],
+      platforms: ["TikTok", "YouTube", "Instagram", "X", "Facebook", "Snapchat", "Others"],
+      covers: ["Cover 1", "Cover 2", "Cover 3", "Cover 4", "Cover 5", "Cover 6"]
+    };
+
+    const coverImages = [
+      "assets/cover-1.png",
+      "assets/cover-2.png",
+      "assets/cover-3.png",
+      "assets/cover-4.png",
+      "assets/cover-5.png",
+      "assets/cover-6.png"
+    ];
+
+    const state = {
+      lang: "en",
+      step: 0,
+      data: { profile: {}, answers: {}, creators: [{}, {}, {}] }
+    };
+
+    const questionOrder = ["profile", "aiTime", "contentTypes", "language", "platforms", "cover", "creators", "complete"];
+
+    const $ = (selector) => document.querySelector(selector);
+    const t = (key) => copy[state.lang][key] || key;
+    const esc = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+
+    function makeId() {
+      return crypto.randomUUID ? crypto.randomUUID() : `response-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function setLanguage(lang) {
+      state.lang = lang;
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+      document.body.dir = document.documentElement.dir;
+      $("#langEn").classList.toggle("active", lang === "en");
+      $("#langAr").classList.toggle("active", lang === "ar");
+      document.querySelectorAll("[data-i18n]").forEach((node) => {
+        node.textContent = t(node.dataset.i18n);
+      });
+      renderStep();
+    }
+
+    function getResponses() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+      catch { return []; }
+    }
+
+    function saveResponses(responses) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(responses));
+      localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(responses));
+    }
+
+    function optionPairs(key) {
+      return values[key].map((value, index) => ({ value, label: t(key)[index] || value }));
+    }
+
+    function countryPairs() {
+      const labels = state.lang === "ar" ? arCountryNames : countryNames;
+      return countryNames.map((value, index) => ({ value, label: labels[index] || value }));
+    }
+
+    function renderShell(title, hint, body, options = {}) {
+      const index = state.step;
+      const total = questionOrder.length - 2;
+      const label = index === 0 ? t("profileStep") : `${t("questionStep")} ${Math.min(index, total)} / ${total}`;
+      const progress = index === 0 ? 0 : Math.min(100, Math.round((index / total) * 100));
+      const backDisabled = index === 0 ? "disabled" : "";
+      const nextText = options.submit ? t("submit") : t("next");
+      $("#questionCard").innerHTML = `
+        <div class="meta-row">
+          <span class="step-label">${esc(label)}</span>
+          <div class="progress" aria-hidden="true"><span style="width:${progress}%"></span></div>
+        </div>
+        <h2>${esc(title)}</h2>
+        <p class="hint">${esc(hint)}</p>
+        <div>${body}</div>
+        <p class="error" id="errorMessage" role="alert"></p>
+        <div class="footer-nav">
+          <button class="button secondary" id="backBtn" type="button" ${backDisabled}>${esc(t("back"))}</button>
+          <button class="button primary" id="nextBtn" type="button">${esc(nextText)}</button>
+        </div>
+      `;
+      $("#backBtn").addEventListener("click", () => {
+        if (state.step > 0) {
+          state.step -= 1;
+          renderStep();
+        }
+      });
+      $("#nextBtn").addEventListener("click", () => goNext(options.submit));
+      bindInputs();
+    }
+
+    function renderProfile() {
+      const profile = state.data.profile;
+      renderShell(t("appTitle"), t("appSubtitle"), `
+        <div class="field-grid">
+          <div class="field">
+            <label for="name">${esc(t("name"))}</label>
+            <input id="name" data-profile="name" required value="${esc(profile.name)}">
+          </div>
+          <div class="field">
+            <label for="email">${esc(t("email"))}</label>
+            <input id="email" type="email" data-profile="email" required value="${esc(profile.email)}">
+          </div>
+          <div class="field">
+            <label for="country">${esc(t("countryField"))}</label>
+            <select id="country" data-profile="country" required>
+              <option value=""></option>
+              ${countryPairs().map((country) => `<option value="${esc(country.value)}" ${profile.country === country.value ? "selected" : ""}>${esc(country.label)}</option>`).join("")}
+            </select>
+          </div>
+          <div class="field">
+            <label for="worksInAi">${esc(t("worksInAi"))}</label>
+            <select id="worksInAi" data-profile="worksInAi" required>
+              <option value=""></option>
+              <option value="Yes" ${profile.worksInAi === "Yes" ? "selected" : ""}>${esc(t("yes"))}</option>
+              <option value="No" ${profile.worksInAi === "No" ? "selected" : ""}>${esc(t("no"))}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="isDeveloper">${esc(t("isDeveloper"))}</label>
+            <select id="isDeveloper" data-profile="isDeveloper" required>
+              <option value=""></option>
+              <option value="Yes" ${profile.isDeveloper === "Yes" ? "selected" : ""}>${esc(t("yes"))}</option>
+              <option value="No" ${profile.isDeveloper === "No" ? "selected" : ""}>${esc(t("no"))}</option>
+            </select>
+          </div>
+        </div>
+      `);
+    }
+
+    function optionList(name, pairs, selected = [], type = "checkbox") {
+      return `
+        <div class="option-grid">
+          ${pairs.map((item) => {
+            const isSelected = type === "radio" ? selected === item.value : selected.includes(item.value);
+            return `
+              <label class="option ${isSelected ? "selected" : ""}">
+                <input type="${type}" name="${esc(name)}" value="${esc(item.value)}" ${isSelected ? "checked" : ""}>
+                <span>${esc(item.label)}</span>
+              </label>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function usesOther(key) {
+      const selected = state.data.answers[key];
+      const otherValue = key === "language" ? "Other language" : key === "platforms" ? "Others" : "Other";
+      return Array.isArray(selected) ? selected.includes(otherValue) : selected === otherValue;
+    }
+
+    function renderChoiceQuestion(key, titleKey, hintKey, optionKey, type = "checkbox", max = null) {
+      const current = state.data.answers[key] || (type === "radio" ? "" : []);
+      renderShell(t(titleKey), t(hintKey), `
+        ${optionList(key, optionPairs(optionKey), current, type)}
+        <div class="other-wrap ${usesOther(key) ? "visible" : ""}" id="otherWrap">
+          <label for="${esc(key)}Other">${esc(t("otherPlaceholder"))}</label>
+          <input id="${esc(key)}Other" data-answer-other="${esc(key)}" value="${esc(state.data.answers[`${key}Other`])}" placeholder="${esc(t("otherPlaceholder"))}">
+        </div>
+      `);
+      $("#questionCard").dataset.type = type;
+      $("#questionCard").dataset.max = max || "";
+    }
+
+    function renderCoverQuestion() {
+      const selected = state.data.answers.cover || "";
+      renderShell(t("qCoverTitle"), t("qCoverHint"), `
+        <div class="cover-grid">
+          ${optionPairs("covers").map((item, index) => `
+            <label class="cover-option">
+              <input type="radio" name="cover" value="${esc(item.value)}" ${selected === item.value ? "checked" : ""}>
+              <span class="cover-card">
+                <img src="${esc(coverImages[index])}" alt="" onerror="this.closest('.cover-option').hidden = true">
+              </span>
+            </label>
+          `).join("")}
+        </div>
+      `);
+      $("#questionCard").dataset.type = "radio";
+    }
+
+    function renderCreators() {
+      renderShell(t("qCreatorTitle"), `${t("qCreatorHint")} ${t("giftNote")}`, `
+        <div class="creator-list">
+          ${state.data.creators.map((creator, index) => `
+            <div class="creator-item">
+              <h3>${esc(t("creatorSlot"))} ${index + 1}</h3>
+              <div class="field-grid">
+                <div class="field">
+                  <label>${esc(t("creatorName"))}</label>
+                  <input data-creator="${index}" data-creator-field="name" value="${esc(creator.name)}">
+                </div>
+                <div class="field">
+                  <label>${esc(t("channelLink"))}</label>
+                  <input data-creator="${index}" data-creator-field="link" value="${esc(creator.link)}">
+                </div>
+                <div class="field" style="grid-column:1 / -1;">
+                  <label>${esc(t("reason"))}</label>
+                  <textarea data-creator="${index}" data-creator-field="reason">${esc(creator.reason)}</textarea>
+                </div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `, { submit: true });
+    }
+
+    function renderComplete() {
+      $("#questionCard").innerHTML = `
+        <div class="completion">
+          <h2>${esc(t("completeTitle"))}</h2>
+          <p class="hint">${esc(t("completeBody"))}</p>
+          <button class="button primary" id="anotherBtn" type="button">${esc(t("startAnother"))}</button>
+        </div>
+      `;
+      $("#anotherBtn").addEventListener("click", resetSurvey);
+    }
+
+    function bindInputs() {
+      document.querySelectorAll("[data-profile]").forEach((input) => {
+        const update = () => state.data.profile[input.dataset.profile] = input.value.trim();
+        input.addEventListener("input", update);
+        input.addEventListener("change", update);
+      });
+
+      document.querySelectorAll(".option input, .cover-option input").forEach((input) => {
+        input.addEventListener("change", () => {
+          const key = input.name;
+          const type = $("#questionCard").dataset.type || input.type;
+          if (type === "radio") {
+            state.data.answers[key] = input.value;
+          } else {
+            state.data.answers[key] = [...document.querySelectorAll(`input[name="${key}"]:checked`)].map((node) => node.value);
+          }
+          document.querySelectorAll(".option").forEach((option) => option.classList.toggle("selected", option.querySelector("input").checked));
+          const otherWrap = $("#otherWrap");
+          if (otherWrap) otherWrap.classList.toggle("visible", usesOther(key));
+        });
+      });
+
+      document.querySelectorAll("[data-answer-other]").forEach((input) => {
+        input.addEventListener("input", () => state.data.answers[`${input.dataset.answerOther}Other`] = input.value.trim());
+      });
+
+      document.querySelectorAll("[data-creator]").forEach((input) => {
+        input.addEventListener("input", () => {
+          const index = Number(input.dataset.creator);
+          state.data.creators[index][input.dataset.creatorField] = input.value.trim();
+        });
+      });
+    }
+
+    function validateCurrent() {
+      const key = questionOrder[state.step];
+      if (key === "profile") {
+        const required = ["name", "email", "country", "worksInAi", "isDeveloper"];
+        const missing = required.some((field) => !state.data.profile[field]);
+        const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.data.profile.email || "");
+        if (missing || !emailValid) return t("required");
+      }
+      if (key === "aiTime" && !state.data.answers.aiTime) return t("required");
+      if (key === "contentTypes") {
+        const selected = state.data.answers.contentTypes || [];
+        if (!selected.length) return t("required");
+        if (selected.length > 3) return t("maxThree");
+      }
+      if (key === "language" && !state.data.answers.language) return t("required");
+      if (key === "platforms") {
+        const selected = state.data.answers.platforms || [];
+        if (!selected.length) return t("required");
+        if (selected.length > 2) return t("maxTwo");
+      }
+      if (key === "cover" && !state.data.answers.cover) return t("required");
+      return "";
+    }
+
+    function goNext(submit = false) {
+      const error = validateCurrent();
+      const errorNode = $("#errorMessage");
+      if (error) {
+        if (errorNode) errorNode.textContent = error;
+        return;
+      }
+
+      if (submit) {
+        const responses = getResponses();
+        responses.push({
+          id: makeId(),
+          createdAt: new Date().toISOString(),
+          lang: state.lang,
+          profile: structuredClone(state.data.profile),
+          answers: structuredClone(state.data.answers),
+          creators: structuredClone(state.data.creators)
+        });
+        saveResponses(responses);
+      }
+
+      state.step += 1;
+      renderStep();
+    }
+
+    function renderStep() {
+      const key = questionOrder[state.step];
+      if (key === "profile") renderProfile();
+      if (key === "aiTime") renderChoiceQuestion("aiTime", "qAiTimeTitle", "qAiTimeHint", "aiTimeOptions", "radio");
+      if (key === "contentTypes") renderChoiceQuestion("contentTypes", "qContentTitle", "qContentHint", "contentTypes", "checkbox", 3);
+      if (key === "language") renderChoiceQuestion("language", "qLanguageTitle", "qLanguageHint", "languageOptions", "radio");
+      if (key === "platforms") renderChoiceQuestion("platforms", "qPlatformTitle", "qPlatformHint", "platforms", "checkbox", 2);
+      if (key === "cover") renderCoverQuestion();
+      if (key === "creators") renderCreators();
+      if (key === "complete") renderComplete();
+    }
+
+    function resetSurvey() {
+      state.step = 0;
+      state.data = { profile: {}, answers: {}, creators: [{}, {}, {}] };
+      renderStep();
+    }
+
+    $("#langEn").addEventListener("click", () => setLanguage("en"));
+    $("#langAr").addEventListener("click", () => setLanguage("ar"));
+    setLanguage("en");
+  </script>
+</body>
+</html>
