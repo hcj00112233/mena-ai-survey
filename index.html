@@ -505,6 +505,7 @@
   <script>
     const STORAGE_KEY = "mena-ai-content-survey-responses";
     const LEGACY_STORAGE_KEY = "gcc-ai-content-survey-responses";
+    const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwLThipXbh9Vy-mkj0BOUhU2060EsGgJ0nEJ2AhE-zI4k5RlPv5z-y2f_ljSMzlMs-JJw/exec";
 
     const countryNames = [
       "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Cote d'Ivoire","Croatia","Cuba","Cyprus","Czechia","Democratic Republic of the Congo","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe","Other"
@@ -530,6 +531,7 @@
         questionStep: "Question",
         completeTitle: "Thank you.",
         completeBody: "Your response has been submitted. We appreciate your time.",
+        submitFailed: "Your response was saved in this browser, but remote sync may have failed. Please try again later if needed.",
         startAnother: "Submit another response",
         name: "Name",
         email: "Email",
@@ -578,6 +580,7 @@
         questionStep: "السؤال",
         completeTitle: "شكرا لك.",
         completeBody: "تم إرسال إجابتك. نقدر وقتك ومشاركتك.",
+        submitFailed: "تم حفظ إجابتك في هذا المتصفح، لكن قد تكون المزامنة البعيدة فشلت. يرجى المحاولة لاحقا إذا لزم الأمر.",
         startAnother: "إرسال إجابة أخرى",
         name: "الاسم",
         email: "البريد الإلكتروني",
@@ -667,6 +670,23 @@
     function saveResponses(responses) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(responses));
       localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(responses));
+    }
+
+    async function submitToGoogleSheet(payload) {
+      if (!GOOGLE_APPS_SCRIPT_URL) return true;
+      const body = new URLSearchParams();
+      body.set("payload", JSON.stringify(payload));
+      try {
+        await fetch(GOOGLE_APPS_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+          body
+        });
+        return true;
+      } catch (error) {
+        return false;
+      }
     }
 
     function optionPairs(key) {
@@ -895,7 +915,7 @@
       return "";
     }
 
-    function goNext(submit = false) {
+    async function goNext(submit = false) {
       const error = validateCurrent();
       const errorNode = $("#errorMessage");
       if (error) {
@@ -905,15 +925,18 @@
 
       if (submit) {
         const responses = getResponses();
-        responses.push({
+        const response = {
           id: makeId(),
           createdAt: new Date().toISOString(),
           lang: state.lang,
           profile: structuredClone(state.data.profile),
           answers: structuredClone(state.data.answers),
           creators: structuredClone(state.data.creators)
-        });
+        };
+        responses.push(response);
         saveResponses(responses);
+        const synced = await submitToGoogleSheet(response);
+        if (!synced && errorNode) errorNode.textContent = t("submitFailed");
       }
 
       state.step += 1;
