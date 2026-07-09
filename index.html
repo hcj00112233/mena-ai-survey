@@ -506,6 +506,11 @@
     const STORAGE_KEY = "mena-ai-content-survey-responses";
     const LEGACY_STORAGE_KEY = "gcc-ai-content-survey-responses";
     const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwLThipXbh9Vy-mkj0BOUhU2060EsGgJ0nEJ2AhE-zI4k5RlPv5z-y2f_ljSMzlMs-JJw/exec";
+    const GOOGLE_SHEET_VERIFY_URL = "https://docs.google.com/spreadsheets/d/1pYAKRCQLvPFlh1-_-XQcqyX58N_AnHhur0wf-UEh6bw/gviz/tq";
+    const GOOGLE_SHEET_RESPONSES_GID = "60489476";
+    const VERIFY_ATTEMPTS = 15;
+    const VERIFY_INTERVAL_MS = 2000;
+    const VERIFY_TIMEOUT_MS = 9000;
 
     const countryNames = [
       "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso","Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Cote d'Ivoire","Croatia","Cuba","Cyprus","Czechia","Democratic Republic of the Congo","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe","Other"
@@ -530,8 +535,9 @@
         profileStep: "Profile",
         questionStep: "Question",
         completeTitle: "Thank you.",
-        completeBody: "Your response has been submitted. We appreciate your time.",
-        submitFailed: "Your response was saved in this browser, but remote sync may have failed. Please try again later if needed.",
+        completeBody: "Your response has been saved in the central sheet. We appreciate your time.",
+        saving: "Saving...",
+        submitFailed: "We could not confirm your response in the central sheet. Your answers are still saved in this browser. Please keep this tab open and try Submit again.",
         startAnother: "Submit another response",
         name: "Name",
         email: "Email",
@@ -579,8 +585,9 @@
         profileStep: "البيانات",
         questionStep: "السؤال",
         completeTitle: "شكرا لك.",
-        completeBody: "تم إرسال إجابتك. نقدر وقتك ومشاركتك.",
-        submitFailed: "تم حفظ إجابتك في هذا المتصفح، لكن قد تكون المزامنة البعيدة فشلت. يرجى المحاولة لاحقا إذا لزم الأمر.",
+        completeBody: "تم حفظ إجابتك في الجدول المركزي. نقدر وقتك ومشاركتك.",
+        saving: "جار الحفظ...",
+        submitFailed: "لم نتمكن من تأكيد إجابتك في الجدول المركزي. ما زالت إجابتك محفوظة في هذا المتصفح. يرجى إبقاء هذه الصفحة مفتوحة والضغط على إرسال مرة أخرى.",
         startAnother: "إرسال إجابة أخرى",
         name: "الاسم",
         email: "البريد الإلكتروني",
@@ -636,6 +643,8 @@
     const state = {
       lang: "en",
       step: 0,
+      submitting: false,
+      pendingResponse: null,
       data: { profile: {}, answers: {}, creators: [{}, {}, {}] }
     };
 
@@ -672,8 +681,66 @@
       localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(responses));
     }
 
-    async function submitToGoogleSheet(payload) {
-      if (!GOOGLE_APPS_SCRIPT_URL) return true;
+    function markResponseConfirmed(id) {
+      const responses = getResponses();
+      const next = responses.map((response) => response && response.id === id ? { ...response, remoteConfirmed: true } : response);
+      saveResponses(next);
+    }
+
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    function loadSheetQuery(query) {
+      return new Promise((resolve, reject) => {
+        const callbackName = `__menaSurveyVerify_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+        const script = document.createElement("script");
+        const cleanup = () => {
+          clearTimeout(timer);
+          script.remove();
+          delete window[callbackName];
+        };
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error("Sheet verification timed out"));
+        }, VERIFY_TIMEOUT_MS);
+
+        window[callbackName] = (result) => {
+          cleanup();
+          resolve(result);
+        };
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("Sheet verification failed"));
+        };
+
+        const url = new URL(GOOGLE_SHEET_VERIFY_URL);
+        url.searchParams.set("gid", GOOGLE_SHEET_RESPONSES_GID);
+        url.searchParams.set("tqx", `responseHandler:${callbackName};out:json`);
+        url.searchParams.set("tq", query);
+        script.src = url.toString();
+        document.head.appendChild(script);
+      });
+    }
+
+    async function recordExistsInSheet(id) {
+      const query = `select A where A = '${String(id)}'`;
+      const result = await loadSheetQuery(query);
+      if (!result || result.status !== "ok") throw new Error("Sheet query failed");
+      return (result.table?.rows || []).some((row) => row.c?.[0]?.v === id);
+    }
+
+    async function waitForSheetRecord(id) {
+      for (let attempt = 0; attempt < VERIFY_ATTEMPTS; attempt += 1) {
+        if (attempt > 0) await delay(VERIFY_INTERVAL_MS);
+        try {
+          if (await recordExistsInSheet(id)) return true;
+        } catch (error) {
+          // Keep polling because Google Sheets can briefly lag after an append.
+        }
+      }
+      return false;
+    }
+
+    async function postToGoogleSheet(payload) {
       const body = new URLSearchParams();
       body.set("payload", JSON.stringify(payload));
       try {
@@ -686,6 +753,41 @@
         return true;
       } catch (error) {
         return false;
+      }
+    }
+
+    async function submitToGoogleSheet(payload, options = {}) {
+      if (!GOOGLE_APPS_SCRIPT_URL) return true;
+      if (options.checkFirst) {
+        try {
+          if (await recordExistsInSheet(payload.id)) {
+            markResponseConfirmed(payload.id);
+            return true;
+          }
+        } catch (error) {
+          return false;
+        }
+      }
+
+      const posted = await postToGoogleSheet(payload);
+      if (!posted) return false;
+      const verified = await waitForSheetRecord(payload.id);
+      if (verified) markResponseConfirmed(payload.id);
+      return verified;
+    }
+
+    async function recoverPendingResponses() {
+      const pending = getResponses().filter((response) => response && response.id && !response.remoteConfirmed);
+      for (const response of pending) {
+        try {
+          if (await recordExistsInSheet(response.id)) {
+            markResponseConfirmed(response.id);
+          } else {
+            await submitToGoogleSheet(response);
+          }
+        } catch (error) {
+          return;
+        }
       }
     }
 
@@ -916,6 +1018,7 @@
     }
 
     async function goNext(submit = false) {
+      if (state.submitting) return;
       const error = validateCurrent();
       const errorNode = $("#errorMessage");
       if (error) {
@@ -924,19 +1027,47 @@
       }
 
       if (submit) {
-        const responses = getResponses();
-        const response = {
+        state.submitting = true;
+        const nextBtn = $("#nextBtn");
+        const backBtn = $("#backBtn");
+        const originalText = nextBtn ? nextBtn.textContent : "";
+        if (nextBtn) {
+          nextBtn.disabled = true;
+          nextBtn.textContent = t("saving");
+        }
+        if (backBtn) backBtn.disabled = true;
+
+        const isRetry = Boolean(state.pendingResponse);
+        const response = state.pendingResponse || {
           id: makeId(),
           createdAt: new Date().toISOString(),
           lang: state.lang,
           profile: structuredClone(state.data.profile),
           answers: structuredClone(state.data.answers),
-          creators: structuredClone(state.data.creators)
+          creators: structuredClone(state.data.creators),
+          remoteConfirmed: false
         };
-        responses.push(response);
-        saveResponses(responses);
-        const synced = await submitToGoogleSheet(response);
-        if (!synced && errorNode) errorNode.textContent = t("submitFailed");
+
+        if (!state.pendingResponse) {
+          const responses = getResponses();
+          responses.push(response);
+          saveResponses(responses);
+          state.pendingResponse = response;
+        }
+
+        const synced = await submitToGoogleSheet(response, { checkFirst: isRetry });
+        if (!synced) {
+          if (errorNode) errorNode.textContent = t("submitFailed");
+          if (nextBtn) {
+            nextBtn.disabled = false;
+            nextBtn.textContent = originalText;
+          }
+          if (backBtn && state.step > 0) backBtn.disabled = false;
+          state.submitting = false;
+          return;
+        }
+        state.pendingResponse = null;
+        state.submitting = false;
       }
 
       state.step += 1;
@@ -957,6 +1088,7 @@
 
     function resetSurvey() {
       state.step = 0;
+      state.pendingResponse = null;
       state.data = { profile: {}, answers: {}, creators: [{}, {}, {}] };
       renderStep();
     }
@@ -964,6 +1096,7 @@
     $("#langEn").addEventListener("click", () => setLanguage("en"));
     $("#langAr").addEventListener("click", () => setLanguage("ar"));
     setLanguage("en");
+    recoverPendingResponses();
   </script>
 </body>
 </html>
